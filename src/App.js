@@ -76,10 +76,6 @@ function App() {
     setEntries(snapshot.docs.map(doc => ({ ...doc.data(), id: doc.id })));
   };
 
-  const handleDelete = (id) => {
-    setEntries(entries.filter(entry => entry.id !== id));
-  };
-
   const ymMap = {};
   entries.forEach(entry => {
     let d;

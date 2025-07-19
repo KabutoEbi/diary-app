@@ -5,7 +5,6 @@ import { Chart, LineElement, PointElement, LinearScale, CategoryScale } from 'ch
 Chart.register(LineElement, PointElement, LinearScale, CategoryScale);
 
 const moodScore = { laugh: 3, meh: 2, frown: 1, angry: 0 };
-const moodLabels = ['怒る', '微妙', '普通', '笑顔'];
 
 function StatisticsPage({ entries, onBack }) {
   const ymSet = new Set();
@@ -76,12 +75,6 @@ function StatisticsPage({ entries, onBack }) {
       dayScores[day - 1] = moodScore[entry.mood];
     }
   });
-  const scoreToIcon = {
-    3: moodIcons.laugh,
-    2: moodIcons.meh,
-    1: moodIcons.frown,
-    0: moodIcons.angry,
-  };
 
   function renderStats(statsEntries, label) {
     const moodCounts = { laugh: 0, meh: 0, frown: 0, angry: 0 };
@@ -133,12 +126,7 @@ function StatisticsPage({ entries, onBack }) {
       },
     ],
   };
-  const moodYIcons = {
-    3: <Laugh className="w-5 h-5 text-yellow-500 mx-auto" />,
-    2: <Meh className="w-5 h-5 text-gray-500 mx-auto" />,
-    1: <Frown className="w-5 h-5 text-blue-500 mx-auto" />,
-    0: <Angry className="w-5 h-5 text-red-500 mx-auto" />,
-  };
+
   const options = {
     scales: {
       x: {
