@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import  { NotebookPen, Laugh, Meh, Frown, Angry, BarChart2, Calendar, LogOut } from 'lucide-react';
+import { NotebookPen, Laugh, Meh, Frown, Angry, BarChart2, Calendar, LogOut } from 'lucide-react';
 import LoginPage from './components/Login_page';
 import StatisticsPage from './components/Statistics_page';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
@@ -196,55 +196,55 @@ function App() {
           <Calendar className="w-6 h-6" />
           <span className="text-xs">年月</span>
         </button>
-      {showYmModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50" onClick={() => setShowYmModal(false)}>
-          <div className="bg-white rounded-lg shadow-xl p-6 min-w-[240px] max-w-[90vw] flex flex-col items-center" onClick={e => e.stopPropagation()}>
-            <h2 className="text-base font-semibold mb-4">年月を選択</h2>
-            <div className="flex flex-row gap-2 mb-4 w-full justify-center">
-              <select
-                className="border rounded px-2 py-1"
-                value={selectedYear}
-                onChange={e => {
-                  setSelectedYear(e.target.value);
-                  setSelectedMonth('');
-                }}
-              >
-                <option value="">年を選択</option>
-                {yearList.map(y => (
-                  <option key={y} value={y}>{y}年</option>
-                ))}
-              </select>
-              <select
-                className="border rounded px-2 py-1"
-                value={selectedMonth}
-                onChange={e => setSelectedMonth(e.target.value)}
-                disabled={!selectedYear}
-              >
-                <option value="">月を選択</option>
-                {selectedYear && ymMap[selectedYear] && Object.keys(ymMap[selectedYear]).sort((a,b)=>b-a).map(m => (
-                  <option key={m} value={m}>{m}月</option>
-                ))}
-              </select>
-            </div>
-            <div className="flex gap-2 w-full justify-center">
-              <button
-                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
-                onClick={() => setShowYmModal(false)}
-              >キャンセル</button>
-              <button
-                className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-200"
-                disabled={!selectedYear || !selectedMonth}
-                onClick={() => {
-                  if (selectedYear && selectedMonth) {
-                    scrollToMonth(`${selectedYear}-${selectedMonth}`);
-                    setShowYmModal(false);
-                  }
-                }}
-              >移動</button>
+        {showYmModal && (
+          <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50" onClick={() => setShowYmModal(false)}>
+            <div className="bg-white rounded-lg shadow-xl p-6 min-w-[240px] max-w-[90vw] flex flex-col items-center" onClick={e => e.stopPropagation()}>
+              <h2 className="text-base font-semibold mb-4">年月を選択</h2>
+              <div className="flex flex-row gap-2 mb-4 w-full justify-center">
+                <select
+                  className="border rounded px-2 py-1"
+                  value={selectedYear}
+                  onChange={e => {
+                    setSelectedYear(e.target.value);
+                    setSelectedMonth('');
+                  }}
+                >
+                  <option value="">年を選択</option>
+                  {yearList.map(y => (
+                    <option key={y} value={y}>{y}年</option>
+                  ))}
+                </select>
+                <select
+                  className="border rounded px-2 py-1"
+                  value={selectedMonth}
+                  onChange={e => setSelectedMonth(e.target.value)}
+                  disabled={!selectedYear}
+                >
+                  <option value="">月を選択</option>
+                  {selectedYear && ymMap[selectedYear] && Object.keys(ymMap[selectedYear]).sort((a, b) => b - a).map(m => (
+                    <option key={m} value={m}>{m}月</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-2 w-full justify-center">
+                <button
+                  className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+                  onClick={() => setShowYmModal(false)}
+                >キャンセル</button>
+                <button
+                  className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-200"
+                  disabled={!selectedYear || !selectedMonth}
+                  onClick={() => {
+                    if (selectedYear && selectedMonth) {
+                      scrollToMonth(`${selectedYear}-${selectedMonth}`);
+                      setShowYmModal(false);
+                    }
+                  }}
+                >移動</button>
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
         {user && (
           <button className="flex-1 flex flex-col items-center py-2 text-gray-600" onClick={async () => {
             await signOut(auth);
