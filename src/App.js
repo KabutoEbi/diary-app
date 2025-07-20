@@ -126,7 +126,6 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-row items-start justify-center bg-gray-100 relative pt-10">
-      {/* サイドバー: md以上で表示、sm以下は非表示 */}
       <div className="hidden md:flex mr-6 mt-10 sticky top-10 h-fit bg-white rounded-lg shadow p-4 flex-col gap-2 min-w-[140px]">
         <button
           className="mb-3 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors font-semibold"
@@ -184,7 +183,6 @@ function App() {
           </button>
         )}
       </div>
-      {/* スマホ用ボトムナビゲーション */}
       <div className="fixed bottom-0 left-0 w-full flex md:hidden bg-white border-t border-gray-200 z-50">
         <button className="flex-1 flex flex-col items-center py-2 text-blue-600" onClick={() => setShowForm(true)}>
           <NotebookPen className="w-6 h-6" />
@@ -198,7 +196,6 @@ function App() {
           <Calendar className="w-6 h-6" />
           <span className="text-xs">年月</span>
         </button>
-      {/* 年月選択モーダル */}
       {showYmModal && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50" onClick={() => setShowYmModal(false)}>
           <div className="bg-white rounded-lg shadow-xl p-6 min-w-[240px] max-w-[90vw] flex flex-col items-center" onClick={e => e.stopPropagation()}>
@@ -273,9 +270,7 @@ function App() {
                 else if (entry.mood === 'angry') MoodIcon = Angry;
                 return (
                   <div key={entry.id} ref={entryRefs[entry.id]} className="border border-gray-200 rounded-md p-4 mb-4 bg-gray-50 w-full max-w-lg mx-auto">
-                    {/* モバイル: 表情・日付→本文の縦並び、PC: 表情｜本文｜日付の横並び */}
                     <div className="flex flex-col md:flex-row md:items-center w-full">
-                      {/* モバイル: 表情＋日付, PC: 表情 */}
                       <div className="flex flex-row items-center flex-shrink-0 min-w-0 md:mr-4">
                         <MoodIcon className="w-7 h-7 text-yellow-500 mr-2 shrink-0" />
                         <span className="text-xs text-gray-400 min-w-fit block md:hidden">
@@ -294,11 +289,9 @@ function App() {
                           })()}
                         </span>
                       </div>
-                      {/* 本文 */}
                       <span className="text-base whitespace-pre-wrap break-words text-left flex-1 mt-2 md:mt-0">
                         {entry.text}
                       </span>
-                      {/* PCのみ: 日付 */}
                       <span className="hidden md:block text-xs text-gray-400 min-w-fit ml-4">
                         {(() => {
                           let d;
@@ -338,7 +331,6 @@ function App() {
         </div>
       </div>
 
-      {/* PCのみ右下に書くボタンを表示、スマホでは非表示 */}
       <button
         className="hidden md:flex fixed right-8 bottom-8 w-14 h-14 rounded-full bg-blue-600 text-white text-3xl shadow-lg items-center justify-center hover:bg-blue-700 transition-colors z-50"
         onClick={() => {
