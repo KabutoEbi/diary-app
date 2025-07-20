@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import  { NotebookPen, Laugh, Meh, Frown, Angry } from 'lucide-react';
+import  { NotebookPen, Laugh, Meh, Frown, Angry, BarChart2, Calendar, LogOut } from 'lucide-react';
 import LoginPage from './components/Login_page';
 import StatisticsPage from './components/Statistics_page';
 import { signOut, onAuthStateChanged } from 'firebase/auth';
@@ -8,6 +9,9 @@ import { collection, addDoc, getDocs, query, orderBy, where } from 'firebase/fir
 import './App.css';
 
 function App() {
+  const [showYmModal, setShowYmModal] = useState(false);
+  const [selectedYear, setSelectedYear] = useState('');
+  const [selectedMonth, setSelectedMonth] = useState('');
   const [entries, setEntries] = useState([]);
   const [text, setText] = useState('');
   const [showForm, setShowForm] = useState(false);
@@ -122,7 +126,8 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-row items-start justify-center bg-gray-100 relative pt-10">
-      <div className="mr-6 mt-10 sticky top-10 h-fit bg-white rounded-lg shadow p-4 flex flex-col gap-2 min-w-[140px]">
+      {/* サイドバー: md以上で表示、sm以下は非表示 */}
+      <div className="hidden md:flex mr-6 mt-10 sticky top-10 h-fit bg-white rounded-lg shadow p-4 flex-col gap-2 min-w-[140px]">
         <button
           className="mb-3 px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700 transition-colors font-semibold"
           onClick={() => setShowStats(true)}
@@ -179,6 +184,80 @@ function App() {
           </button>
         )}
       </div>
+      {/* スマホ用ボトムナビゲーション */}
+      <div className="fixed bottom-0 left-0 w-full flex md:hidden bg-white border-t border-gray-200 z-50">
+        <button className="flex-1 flex flex-col items-center py-2 text-blue-600" onClick={() => setShowForm(true)}>
+          <NotebookPen className="w-6 h-6" />
+          <span className="text-xs">書く</span>
+        </button>
+        <button className="flex-1 flex flex-col items-center py-2 text-green-600" onClick={() => setShowStats(true)}>
+          <BarChart2 className="w-6 h-6" />
+          <span className="text-xs">統計</span>
+        </button>
+        <button className="flex-1 flex flex-col items-center py-2 text-blue-700" onClick={() => setShowYmModal(true)}>
+          <Calendar className="w-6 h-6" />
+          <span className="text-xs">年月</span>
+        </button>
+      {/* 年月選択モーダル */}
+      {showYmModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50" onClick={() => setShowYmModal(false)}>
+          <div className="bg-white rounded-lg shadow-xl p-6 min-w-[240px] max-w-[90vw] flex flex-col items-center" onClick={e => e.stopPropagation()}>
+            <h2 className="text-base font-semibold mb-4">年月を選択</h2>
+            <div className="flex flex-row gap-2 mb-4 w-full justify-center">
+              <select
+                className="border rounded px-2 py-1"
+                value={selectedYear}
+                onChange={e => {
+                  setSelectedYear(e.target.value);
+                  setSelectedMonth('');
+                }}
+              >
+                <option value="">年を選択</option>
+                {yearList.map(y => (
+                  <option key={y} value={y}>{y}年</option>
+                ))}
+              </select>
+              <select
+                className="border rounded px-2 py-1"
+                value={selectedMonth}
+                onChange={e => setSelectedMonth(e.target.value)}
+                disabled={!selectedYear}
+              >
+                <option value="">月を選択</option>
+                {selectedYear && ymMap[selectedYear] && Object.keys(ymMap[selectedYear]).sort((a,b)=>b-a).map(m => (
+                  <option key={m} value={m}>{m}月</option>
+                ))}
+              </select>
+            </div>
+            <div className="flex gap-2 w-full justify-center">
+              <button
+                className="px-4 py-2 rounded bg-gray-200 hover:bg-gray-300"
+                onClick={() => setShowYmModal(false)}
+              >キャンセル</button>
+              <button
+                className="px-4 py-2 rounded bg-blue-600 text-white hover:bg-blue-700 disabled:bg-blue-200"
+                disabled={!selectedYear || !selectedMonth}
+                onClick={() => {
+                  if (selectedYear && selectedMonth) {
+                    scrollToMonth(`${selectedYear}-${selectedMonth}`);
+                    setShowYmModal(false);
+                  }
+                }}
+              >移動</button>
+            </div>
+          </div>
+        </div>
+      )}
+        {user && (
+          <button className="flex-1 flex flex-col items-center py-2 text-gray-600" onClick={async () => {
+            await signOut(auth);
+            setUser(null);
+          }}>
+            <LogOut className="w-6 h-6" />
+            <span className="text-xs">ログアウト</span>
+          </button>
+        )}
+      </div>
 
       <div className="App max-w-xl w-full p-6 bg-white rounded-lg shadow-lg flex flex-col items-center mt-10">
         <h1 className="text-2xl font-bold mb-6">日記アプリ</h1>
@@ -194,12 +273,33 @@ function App() {
                 else if (entry.mood === 'angry') MoodIcon = Angry;
                 return (
                   <div key={entry.id} ref={entryRefs[entry.id]} className="border border-gray-200 rounded-md p-4 mb-4 bg-gray-50 w-full max-w-lg mx-auto">
-                    <div className="flex flex-row items-center justify-between w-full">
-                      <div className="flex flex-row items-center flex-1 min-w-0">
+                    {/* モバイル: 表情・日付→本文の縦並び、PC: 表情｜本文｜日付の横並び */}
+                    <div className="flex flex-col md:flex-row md:items-center w-full">
+                      {/* モバイル: 表情＋日付, PC: 表情 */}
+                      <div className="flex flex-row items-center flex-shrink-0 min-w-0 md:mr-4">
                         <MoodIcon className="w-7 h-7 text-yellow-500 mr-2 shrink-0" />
-                        <span className="text-base whitespace-pre-wrap break-words text-left flex-1">{entry.text}</span>
+                        <span className="text-xs text-gray-400 min-w-fit block md:hidden">
+                          {(() => {
+                            let d;
+                            if (entry.createdAt) {
+                              if (entry.createdAt.seconds) {
+                                d = new Date(entry.createdAt.seconds * 1000);
+                              } else {
+                                d = new Date(entry.createdAt);
+                              }
+                            } else {
+                              d = new Date();
+                            }
+                            return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+                          })()}
+                        </span>
                       </div>
-                      <div className="text-xs text-gray-400 text-right min-w-fit ml-4">
+                      {/* 本文 */}
+                      <span className="text-base whitespace-pre-wrap break-words text-left flex-1 mt-2 md:mt-0">
+                        {entry.text}
+                      </span>
+                      {/* PCのみ: 日付 */}
+                      <span className="hidden md:block text-xs text-gray-400 min-w-fit ml-4">
                         {(() => {
                           let d;
                           if (entry.createdAt) {
@@ -213,7 +313,7 @@ function App() {
                           }
                           return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
                         })()}
-                      </div>
+                      </span>
                     </div>
                   </div>
                 );
@@ -238,8 +338,9 @@ function App() {
         </div>
       </div>
 
+      {/* PCのみ右下に書くボタンを表示、スマホでは非表示 */}
       <button
-        className="fixed right-8 bottom-8 w-14 h-14 rounded-full bg-blue-600 text-white text-3xl shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors z-50"
+        className="hidden md:flex fixed right-8 bottom-8 w-14 h-14 rounded-full bg-blue-600 text-white text-3xl shadow-lg items-center justify-center hover:bg-blue-700 transition-colors z-50"
         onClick={() => {
           const today = new Date();
           const todayStr = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
