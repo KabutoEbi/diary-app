@@ -256,43 +256,39 @@ function App() {
         )}
       </div>
 
-      <div className="App max-w-xl w-full p-6 bg-white rounded-lg shadow-lg flex flex-col items-center mt-10">
-        <h1 className="text-2xl font-bold mb-6">日記アプリ</h1>
-        <div className="w-full flex flex-col items-center">
-          {entries.length === 0 ? (
-            <p className="text-gray-500">まだ日記がありません。</p>
-          ) : (
-            <>
-              {entries.map(entry => {
-                let MoodIcon = Laugh;
-                if (entry.mood === 'meh') MoodIcon = Meh;
-                else if (entry.mood === 'frown') MoodIcon = Frown;
-                else if (entry.mood === 'angry') MoodIcon = Angry;
-                return (
-                  <div key={entry.id} ref={entryRefs[entry.id]} className="border border-gray-200 rounded-md p-4 mb-4 bg-gray-50 w-full max-w-lg mx-auto">
-                    <div className="flex flex-col md:flex-row md:items-center w-full">
-                      <div className="flex flex-row items-center flex-shrink-0 min-w-0 md:mr-4">
-                        <MoodIcon className="w-7 h-7 text-yellow-500 mr-2 shrink-0" />
-                        <span className="text-xs text-gray-400 min-w-fit block md:hidden">
-                          {(() => {
-                            let d;
-                            if (entry.createdAt) {
-                              if (entry.createdAt.seconds) {
-                                d = new Date(entry.createdAt.seconds * 1000);
-                              } else {
-                                d = new Date(entry.createdAt);
-                              }
-                            } else {
-                              d = new Date();
-                            }
-                            return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
-                          })()}
-                        </span>
-                      </div>
-                      <span className="text-base whitespace-pre-wrap break-words text-left flex-1 mt-2 md:mt-0">
-                        {entry.text}
-                      </span>
-                      <span className="hidden md:block text-xs text-gray-400 min-w-fit ml-4">
+    <div className="App max-w-xl w-full p-6 bg-white rounded-lg shadow-lg flex flex-col items-center mt-10">
+      <h1 className="text-2xl font-bold mb-6">日記アプリ</h1>
+      {(() => {
+        const today = new Date();
+        const todayStr = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+        const alreadyExists = entries.some(entry => {
+          const entryDate = entry.createdAt?.seconds
+            ? new Date(entry.createdAt.seconds * 1000)
+            : new Date(entry.createdAt);
+          const entryStr = entryDate.getFullYear() + '-' + (entryDate.getMonth() + 1) + '-' + entryDate.getDate();
+          return entryStr === todayStr;
+        });
+        if (!alreadyExists) {
+          return <div className="text-blue-600 text-sm mb-4">今日はまだ日記を書いていません</div>;
+        }
+        return null;
+      })()}
+      <div className="w-full flex flex-col items-center">
+        {entries.length === 0 ? (
+          <p className="text-gray-500">まだ日記がありません。</p>
+        ) : (
+          <>
+            {entries.map(entry => {
+              let MoodIcon = Laugh;
+              if (entry.mood === 'meh') MoodIcon = Meh;
+              else if (entry.mood === 'frown') MoodIcon = Frown;
+              else if (entry.mood === 'angry') MoodIcon = Angry;
+              return (
+                <div key={entry.id} ref={entryRefs[entry.id]} className="border border-gray-200 rounded-md p-4 mb-4 bg-gray-50 w-full max-w-lg mx-auto">
+                  <div className="flex flex-col md:flex-row md:items-center w-full">
+                    <div className="flex flex-row items-center flex-shrink-0 min-w-0 md:mr-4">
+                      <MoodIcon className="w-7 h-7 text-yellow-500 mr-2 shrink-0" />
+                      <span className="text-xs text-gray-400 min-w-fit block md:hidden">
                         {(() => {
                           let d;
                           if (entry.createdAt) {
@@ -308,27 +304,31 @@ function App() {
                         })()}
                       </span>
                     </div>
+                    <span className="text-base whitespace-pre-wrap break-words text-left flex-1 mt-2 md:mt-0">
+                      {entry.text}
+                    </span>
+                    <span className="hidden md:block text-xs text-gray-400 min-w-fit ml-4">
+                      {(() => {
+                        let d;
+                        if (entry.createdAt) {
+                          if (entry.createdAt.seconds) {
+                            d = new Date(entry.createdAt.seconds * 1000);
+                          } else {
+                            d = new Date(entry.createdAt);
+                          }
+                        } else {
+                          d = new Date();
+                        }
+                        return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+                      })()}
+                    </span>
                   </div>
-                );
-              })}
-              {(() => {
-                const today = new Date();
-                const todayStr = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
-                const alreadyExists = entries.some(entry => {
-                  const entryDate = entry.createdAt?.seconds
-                    ? new Date(entry.createdAt.seconds * 1000)
-                    : new Date(entry.createdAt);
-                  const entryStr = entryDate.getFullYear() + '-' + (entryDate.getMonth() + 1) + '-' + entryDate.getDate();
-                  return entryStr === todayStr;
-                });
-                if (!alreadyExists) {
-                  return <div className="text-blue-600 text-sm mt-4">今日はまだ日記を書いていません</div>;
-                }
-                return null;
-              })()}
-            </>
-          )}
-        </div>
+                </div>
+              );
+            })}
+          </>
+        )}
+      </div>
       </div>
 
       <button
