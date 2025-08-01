@@ -46,7 +46,7 @@ function StatisticsPage({ entries, onBack }) {
 
   const moodIcons = {
     laugh: <Laugh className="w-5 h-5 text-yellow-500 mx-auto" />,
-    meh: <Meh className="w-5 h-5 text-gray-500 mx-auto" />,
+    meh: <Meh className="w-5 h-5 text-green-600 mx-auto" />,
     frown: <Frown className="w-5 h-5 text-blue-500 mx-auto" />,
     angry: <Angry className="w-5 h-5 text-red-500 mx-auto" />,
   };
