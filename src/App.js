@@ -131,7 +131,7 @@ function App() {
     if (ids && ids.length > 0) {
       const lastId = ids[0];
       if (entryRefs[lastId]?.current) {
-        entryRefs[lastId].current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        entryRefs[lastId].current.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }
   };
