@@ -94,11 +94,26 @@ function App() {
     }
     const y = d.getFullYear();
     const m = d.getMonth() + 1;
-    if (!ymMap[y]) ymMap[y] = {};
-    if (!ymMap[y][m]) ymMap[y][m] = [];
-    ymMap[y][m].push(entry.id);
+    const ymKey = `${y}-${m}`;
+    if (!ymMap[ymKey]) ymMap[ymKey] = [];
+    ymMap[ymKey].push(entry.id);
   });
-  const yearList = Object.keys(ymMap).sort((a, b) => b - a);
+  
+  const yearSet = new Set();
+  entries.forEach(entry => {
+    let d;
+    if (entry.createdAt) {
+      if (entry.createdAt.seconds) {
+        d = new Date(entry.createdAt.seconds * 1000);
+      } else {
+        d = new Date(entry.createdAt);
+      }
+    } else {
+      d = new Date();
+    }
+    yearSet.add(d.getFullYear());
+  });
+  const yearList = Array.from(yearSet).sort((a, b) => b - a);
 
   const [openYears, setOpenYears] = useState({});
   const toggleYear = (year) => {
@@ -110,10 +125,14 @@ function App() {
     entryRefs[entry.id] = React.createRef();
   });
 
+  
   const scrollToMonth = (ym) => {
-    const firstId = ymMap[ym]?.[0];
-    if (firstId && entryRefs[firstId]?.current) {
-      entryRefs[firstId].current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const ids = ymMap[ym];
+    if (ids && ids.length > 0) {
+      const lastId = ids[0];
+      if (entryRefs[lastId]?.current) {
+        entryRefs[lastId].current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
     }
   };
 
@@ -148,17 +167,34 @@ function App() {
               </button>
               {openYears[year] && (
                 <div className="pl-4 flex flex-col gap-1">
-                  {Object.keys(ymMap[year])
-                    .sort((a, b) => b - a)
-                    .map(month => (
+                  {(() => {
+                    // その年の月一覧
+                    const months = entries
+                      .filter(entry => {
+                        let d;
+                        if (entry.createdAt) {
+                          if (entry.createdAt.seconds) {
+                            d = new Date(entry.createdAt.seconds * 1000);
+                          } else {
+                            d = new Date(entry.createdAt);
+                          }
+                        } else {
+                          d = new Date();
+                        }
+                        return d.getFullYear() === Number(year);
+                      })
+                      .map(entry => (new Date(entry.createdAt?.seconds ? entry.createdAt.seconds * 1000 : entry.createdAt)).getMonth() + 1);
+                    const uniqueMonths = Array.from(new Set(months)).sort((a, b) => b - a);
+                    return uniqueMonths.map(month => (
                       <button
                         key={month}
                         className="text-blue-700 hover:underline text-left px-2 py-1 rounded hover:bg-blue-100"
-                        onClick={() => scrollToMonth(`${year}-${month}`)}
+                        onClick={() => scrollToMonth(`${Number(year)}-${Number(month)}`)}
                       >
                         {month}月
                       </button>
-                    ))}
+                    ));
+                  })()}
                 </div>
               )}
             </div>
@@ -184,7 +220,25 @@ function App() {
         )}
       </div>
       <div className="fixed bottom-0 left-0 w-full flex md:hidden bg-white border-t border-gray-200 z-50">
-        <button className="flex-1 flex flex-col items-center py-2 text-blue-600" onClick={() => setShowForm(true)}>
+        <button
+          className="flex-1 flex flex-col items-center py-2 text-blue-600"
+          onClick={() => {
+            const today = new Date();
+            const todayStr = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+            const alreadyExists = entries.some(entry => {
+              const entryDate = entry.createdAt?.seconds
+                ? new Date(entry.createdAt.seconds * 1000)
+                : new Date(entry.createdAt);
+              const entryStr = entryDate.getFullYear() + '-' + (entryDate.getMonth() + 1) + '-' + entryDate.getDate();
+              return entryStr === todayStr;
+            });
+            if (alreadyExists) {
+              alert('今日はすでに日記を書いています。');
+              return;
+            }
+            setShowForm(true);
+          }}
+        >
           <NotebookPen className="w-6 h-6" />
           <span className="text-xs">書く</span>
         </button>
@@ -221,9 +275,28 @@ function App() {
                   disabled={!selectedYear}
                 >
                   <option value="">月を選択</option>
-                  {selectedYear && ymMap[selectedYear] && Object.keys(ymMap[selectedYear]).sort((a, b) => b - a).map(m => (
-                    <option key={m} value={m}>{m}月</option>
-                  ))}
+                  {selectedYear && (() => {
+                    // 選択された年の月一覧をentriesから抽出
+                    const months = entries
+                      .filter(entry => {
+                        let d;
+                        if (entry.createdAt) {
+                          if (entry.createdAt.seconds) {
+                            d = new Date(entry.createdAt.seconds * 1000);
+                          } else {
+                            d = new Date(entry.createdAt);
+                          }
+                        } else {
+                          d = new Date();
+                        }
+                        return d.getFullYear() === Number(selectedYear);
+                      })
+                      .map(entry => (new Date(entry.createdAt?.seconds ? entry.createdAt.seconds * 1000 : entry.createdAt)).getMonth() + 1);
+                    const uniqueMonths = Array.from(new Set(months)).sort((a, b) => b - a);
+                    return uniqueMonths.map(m => (
+                      <option key={m} value={m}>{m}月</option>
+                    ));
+                  })()}
                 </select>
               </div>
               <div className="flex gap-2 w-full justify-center">
@@ -280,14 +353,22 @@ function App() {
           <>
             {entries.map(entry => {
               let MoodIcon = Laugh;
-              if (entry.mood === 'meh') MoodIcon = Meh;
-              else if (entry.mood === 'frown') MoodIcon = Frown;
-              else if (entry.mood === 'angry') MoodIcon = Angry;
+              let moodColor = 'text-yellow-500';
+              if (entry.mood === 'meh') {
+                MoodIcon = Meh;
+                moodColor = 'text-green-600';
+              } else if (entry.mood === 'frown') {
+                MoodIcon = Frown;
+                moodColor = 'text-blue-500';
+              } else if (entry.mood === 'angry') {
+                MoodIcon = Angry;
+                moodColor = 'text-red-500';
+              }
               return (
                 <div key={entry.id} ref={entryRefs[entry.id]} className="border border-gray-200 rounded-md p-4 mb-4 bg-gray-50 w-full max-w-lg mx-auto">
                   <div className="flex flex-col md:flex-row md:items-center w-full">
                     <div className="flex flex-row items-center flex-shrink-0 min-w-0 md:mr-4">
-                      <MoodIcon className="w-7 h-7 text-yellow-500 mr-2 shrink-0" />
+                      <MoodIcon className={`w-7 h-7 mr-2 shrink-0 ${moodColor}`} />
                       <span className="text-xs text-gray-400 min-w-fit block md:hidden">
                         {(() => {
                           let d;
