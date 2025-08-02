@@ -263,6 +263,29 @@ function App() {
         setShowForm={setShowForm}
       />
 
+      {/* PC用右下「書く」ボタン */}
+      <button
+        className="hidden md:flex fixed right-8 bottom-8 w-14 h-14 rounded-full bg-blue-600 text-white text-3xl shadow-lg items-center justify-center hover:bg-blue-700 transition-colors z-50"
+        onClick={() => {
+          const today = new Date();
+          const todayStr = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
+          const alreadyExists = entries.some(entry => {
+            const entryDate = new Date(entry.createdAt?.seconds ? entry.createdAt.seconds * 1000 : entry.date);
+            const entryStr = entryDate.getFullYear() + '-' + (entryDate.getMonth() + 1) + '-' + entryDate.getDate();
+            return entryStr === todayStr;
+          });
+          if (alreadyExists) {
+            alert('今日はすでに日記を書いています。');
+            return;
+          }
+          setShowForm(true);
+        }}
+        title="日記を書く"
+      >
+        <span className="sr-only">日記を書く</span>
+        <svg xmlns="http://www.w3.org/2000/svg" className="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 20h9" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16.5 3.5a2.121 2.121 0 113 3L7 19.5 3 21l1.5-4L16.5 3.5z" /></svg>
+      </button>
+
       {showForm && (
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50" onClick={() => setShowForm(false)}>
           <div className="bg-white rounded-lg shadow-xl p-8 min-w-[320px] max-w-[90vw] flex flex-col items-center" onClick={e => e.stopPropagation()}>
