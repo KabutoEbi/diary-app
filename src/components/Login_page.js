@@ -1,9 +1,18 @@
-import React, { useState } from 'react';
-import { signInWithPopup } from 'firebase/auth';
+import React, { useState, useEffect } from 'react';
+import { signInWithPopup, onAuthStateChanged } from 'firebase/auth';
 import { auth, provider } from '../firebase';
 
 function LoginPage({ onLogin }) {
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user && onLogin) {
+        onLogin(user);
+      }
+    });
+    return () => unsubscribe();
+  }, [onLogin]);
 
   const handleGoogleLogin = async () => {
     try {
