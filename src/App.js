@@ -138,12 +138,10 @@ function App() {
         const el = entryRefs.current[lastId].current;
         const rect = el.getBoundingClientRect();
         const absoluteY = window.scrollY + rect.top;
-        // 1回だけスクロールする
         window.scrollTo({
           top: absoluteY - headerHeight - (window.innerWidth < 768 ? bottomNavHeight : 0) - 8,
           behavior: 'smooth'
         });
-        // setTimeoutによる2回目のscrollByは不要なので削除
       }
     }
   };
@@ -157,8 +155,9 @@ function App() {
 
   return (
     <div className="min-h-screen flex flex-row justify-center bg-gray-100 relative pt-10">
-      <header className="fixed top-0 left-0 w-full bg-white shadow z-40 flex justify-center">
-        <h1 className="text-2xl font-bold py-4">日記アプリ</h1>
+      <header className="fixed top-0 left-0 w-full bg-white shadow z-40 flex flex-col items-center">
+        <h1 className="text-3xl font-bold pt-4">日記アプリ</h1>
+        <p className="pb-2 text-sm text-gray-500">今後アプリ化する</p>
       </header>
 
       <Sidebar
