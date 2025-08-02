@@ -18,6 +18,11 @@ function App() {
   const [user, setUser] = useState(null);
   const [showStats, setShowStats] = useState(false);
   const [showYmModal, setShowYmModal] = useState(false);
+  const [selectedYear, setSelectedYear] = useState(null);
+  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [open, setOpen] = useState(false);
+  const [openMonth, setOpenMonth] = useState(false);
+  const setShowYearDropdown = setOpen;
 
   const moodOptions = [
     { label: 'うれしい', value: 'laugh', icon: <Laugh className="w-7 h-7" /> },
@@ -119,32 +124,26 @@ function App() {
     setOpenYears(prev => ({ ...prev, [year]: !prev[year] }));
   };
 
-  const entryRefs = {};
-  entries.forEach(entry => {
-    entryRefs[entry.id] = React.createRef();
-  });
+  const entryRefs = React.useRef({});
 
   const scrollToMonth = (ym) => {
     const ids = ymMap[ym];
     if (ids && ids.length > 0) {
       const lastId = ids[0];
-      if (entryRefs[lastId]?.current) {
+      if (entryRefs.current[lastId]?.current) {
         const header = document.querySelector('header');
         const headerHeight = header ? header.offsetHeight : 0;
         const bottomNav = document.querySelector('.fixed.bottom-0');
         const bottomNavHeight = (window.innerWidth < 768 && bottomNav) ? bottomNav.offsetHeight : 0;
-        const el = entryRefs[lastId].current;
+        const el = entryRefs.current[lastId].current;
         const rect = el.getBoundingClientRect();
         const absoluteY = window.scrollY + rect.top;
+        // 1回だけスクロールする
         window.scrollTo({
-          top: absoluteY - headerHeight - 8,
+          top: absoluteY - headerHeight - (window.innerWidth < 768 ? bottomNavHeight : 0) - 8,
           behavior: 'smooth'
         });
-        if (window.innerWidth < 768) {
-          setTimeout(() => {
-            window.scrollBy({ top: -bottomNavHeight - 8, behavior: 'smooth' });
-          }, 400);
-        }
+        // setTimeoutによる2回目のscrollByは不要なので削除
       }
     }
   };
@@ -195,8 +194,11 @@ function App() {
                   MoodIcon = Angry;
                   moodColor = 'text-red-500';
                 }
+                if (!entryRefs.current[entry.id]) {
+                  entryRefs.current[entry.id] = React.createRef();
+                }
                 return (
-                  <div key={entry.id} ref={entryRefs[entry.id]} className="border border-gray-200 rounded-md p-4 mb-4 bg-gray-50 w-full max-w-lg mx-auto">
+                  <div key={entry.id} ref={entryRefs.current[entry.id]} className="border border-gray-200 rounded-md p-4 mb-4 bg-gray-50 w-full max-w-lg mx-auto">
                     <div className="flex flex-col md:flex-row md:items-center w-full">
                       <div className="flex flex-row items-center flex-shrink-0 min-w-0 md:mr-4">
                         <MoodIcon className={`w-7 h-7 mr-2 shrink-0 ${moodColor}`} />
@@ -304,7 +306,94 @@ function App() {
         <div className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50" onClick={() => setShowYmModal(false)}>
           <div className="bg-white rounded-lg shadow-xl p-8 min-w-[320px] max-w-[90vw] flex flex-col items-center" onClick={e => e.stopPropagation()}>
             <h2 className="text-lg font-semibold mb-4">年月選択</h2>
-            {/* 年月選択UIをここに追加 */}
+            <div className="w-full flex flex-col md:flex-row gap-4 mb-4">
+              {/* 年を選択 */}
+              <div className="flex-1">
+                <div
+                  className="font-semibold mb-2 text-center cursor-pointer select-none border border-gray-300 rounded py-2 hover:bg-gray-100"
+                  onClick={() => setShowYearDropdown(open => !open)}
+                >
+                  {selectedYear ? `${selectedYear}年` : "年を選択"}
+                </div>
+                {/* 年のドロップダウン */}
+                {open && (
+                  <div className="mt-2 w-full bg-white border border-gray-300 rounded shadow z-50">
+                    {yearList.length === 0 ? (
+                      <div className="text-gray-400 text-sm px-4 py-2">なし</div>
+                    ) : (
+                      yearList.map(year => (
+                        <div
+                          key={year}
+                          className={`px-4 py-2 cursor-pointer hover:bg-blue-100 text-center ${selectedYear === year ? "bg-blue-600 text-white" : ""}`}
+                          onClick={() => {
+                            setSelectedYear(year);
+                            setOpen(false);
+                            setOpenMonth(false); // 月のドロップダウンも閉じる
+                            setSelectedMonth(null); // 月もリセット
+                          }}
+                        >
+                          {year}年
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
+              </div>
+              {/* 月を選択 */}
+              <div className="flex-1">
+                <div
+                  className="font-semibold mb-2 text-center cursor-pointer select-none border border-gray-300 rounded py-2 hover:bg-gray-100"
+                  onClick={() => {
+                    if (selectedYear) setOpenMonth(openMonth => !openMonth);
+                  }}
+                >
+                  {selectedMonth ? `${selectedMonth}月` : "月を選択"}
+                </div>
+                {/* 月のドロップダウン */}
+                {selectedYear && openMonth && (
+                  <div className="mt-2 w-full bg-white border border-gray-300 rounded shadow z-50">
+                    {(() => {
+                      const months = entries
+                        .filter(entry => {
+                          let d;
+                          if (entry.createdAt) {
+                            if (entry.createdAt.seconds) {
+                              d = new Date(entry.createdAt.seconds * 1000);
+                            } else {
+                              d = new Date(entry.createdAt);
+                            }
+                          } else {
+                            d = new Date();
+                          }
+                          return d.getFullYear() === Number(selectedYear);
+                        })
+                        .map(entry => (new Date(entry.createdAt?.seconds ? entry.createdAt.seconds * 1000 : entry.createdAt)).getMonth() + 1);
+                      const uniqueMonths = Array.from(new Set(months)).sort((a, b) => b - a);
+                      return uniqueMonths.length === 0 ? (
+                        <div className="text-gray-400 text-sm px-4 py-2">月がありません</div>
+                      ) : (
+                        uniqueMonths.map(month => (
+                          <div
+                            key={month}
+                            className={`px-4 py-2 cursor-pointer hover:bg-blue-100 text-center ${selectedMonth === month ? "bg-blue-600 text-white" : ""}`}
+                            onClick={() => {
+                              setSelectedMonth(month);
+                              setOpenMonth(false);
+                              setShowYmModal(false);
+                              setTimeout(() => {
+                                scrollToMonth(`${selectedYear}-${month}`);
+                              }, 200); // 200msほど遅らせる
+                            }}
+                          >
+                            {month}月
+                          </div>
+                        ))
+                      );
+                    })()}
+                  </div>
+                )}
+              </div>
+            </div>
             <button className="mt-4 px-4 py-2 rounded bg-gray-200 hover:bg-gray-300" onClick={() => setShowYmModal(false)}>閉じる</button>
           </div>
         </div>
